@@ -26,7 +26,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     let vtt_content = srt2vtt(srt_content)?;
 
-    let vtt_filename = create_vtt_filename(&config.filename);
+    let vtt_filename = create_vtt_filename(&config.filename)?;
 
     let mut file = fs::File::create(vtt_filename)?;
 
@@ -35,8 +35,12 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn create_vtt_filename(srt_filename: &String) -> String {
-    srt_filename.replace(".srt", ".vtt")
+fn create_vtt_filename(srt_filename: &String) -> Result<String, &'static str> {
+    let mut name = srt_filename.get(0..srt_filename.len() - 4).unwrap().to_string();
+
+    name.push_str(".vtt");
+
+    Ok(name)
 }
 
 fn srt2vtt(content: String) -> Result<String, Box<dyn Error>> {
@@ -96,7 +100,18 @@ mod tests {
 
         let vtt_filename_expected = "filename.ABC.vtt";
 
-        let vtt_filename = create_vtt_filename(&srt_filename.to_string());
+        let vtt_filename = create_vtt_filename(&srt_filename.to_string()).unwrap();
+
+        assert_eq!(&vtt_filename, vtt_filename_expected);
+    }
+
+    #[test]
+    fn create_correct_complex_filename() {
+        let srt_filename = "filename.srt.123.ABC.srt";
+
+        let vtt_filename_expected = "filename.srt.123.ABC.vtt";
+
+        let vtt_filename = create_vtt_filename(&srt_filename.to_string()).unwrap();
 
         assert_eq!(&vtt_filename, vtt_filename_expected);
     }
